@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專案文件控管平臺系統稽核工作說明</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --warning-color: #f9ab00;
+            --light-bg: #f8f9fa;
+            --dark-text: #202124;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--dark-text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            animation: fadeIn 1s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 60px;
+            margin-right: 15px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-text);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 16px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background: #f5f5f5;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            min-height: 500px;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark-text);
+            border-left: 5px solid var(--primary-color);
+            padding-left: 15px;
+        }
+        
+        h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 25px 0 15px;
+            color: var(--dark-text);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        td {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e8f0fe;
+            transition: var(--transition);
+        }
+        
+        .wbs-table th:first-child,
+        .wbs-table td:first-child {
+            width: 10%;
+        }
+        
+        .wbs-table th:nth-child(2),
+        .wbs-table td:nth-child(2) {
+            width: 30%;
+        }
+        
+        .raci-table th:first-child,
+        .raci-table td:first-child {
+            width: 25%;
+        }
+        
+        .raci-table th:not(:first-child),
+        .raci-table td:not(:first-child) {
+            width: 18.75%;
+            text-align: center;
+        }
+        
+        /* 甘特圖樣式 - 根據原始程序碼調整 */
+        .gantt-container {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            background: white;
+            overflow: hidden;
+        }
+        
+        .gantt-header {
+            background-color: #f0f0f0;
+        }
+        
+        .gantt-header th {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            font-weight: normal;
+        }
+        
+        .week-header {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        
+        .gantt-body td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        
+        .task-name {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .main-task {
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+        
+        .sub-task {
+            padding-left: 20px !important;
+        }
+        
+        .gantt-bar {
+            height: 20px;
+            border-radius: 3px;
+            position: relative;
+        }
+        
+        .phase-1 { background-color: #3498db; }
+        .phase-2 { background-color: #2ecc71; }
+        .phase-3 { background-color: #e74c3c; }
+        .phase-4 { background-color: #f39c12; }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            display: none;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        
+        .controls {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .filter-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .download-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .download-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 30px;
+        }
+        
+        .ste-name {
+            height: 40px;
+            margin-left: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .logo-container {
+                margin-bottom: 10px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                padding: 12px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            h2 {
+                font-size: 24px;
+            }
+            
+            th, td {
+                padding: 12px 15px;
+            }
+            
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .filter-btn {
+                margin: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="https://i.urusai.cc/Qlsat.png" alt="STE LOGO" class="logo">
+                <h1 class="title">專案文件控管平臺系統稽核工作說明</h1>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="tab1">專案稽核工作分解結構 (WBS)</div>
+            <div class="tab" data-tab="tab2">RACI 職責劃分表</div>
+            <div class="tab" data-tab="tab3">稽核時程甘特圖</div>
+        </div>
+        
+        <div class="tab-content active" id="tab1">
+            <h2>專案稽核工作分解結構 (WBS)</h2>
+            
+            <table class="wbs-table">
+                <thead>
+                    <tr>
+                        <th>WBS</th>
+                        <th>WBS 工作項目 (Work Breakdown Structure)</th>
+                        <th>階段目標與說明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1.0</strong></td>
+                        <td><strong>稽核啟動與規劃階段 (Initiation & Planning)</strong></td>
+                        <td>確立稽核範圍，並確保資源到位。</td>
+                    </tr>
+                    <tr>
+                        <td>1.1</td>
+                        <td>稽核啟動與目標確立</td>
+                        <td>召開啟動會議，定義稽核範圍（RK, RL, YM, TYGL, ME06A）及時程。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2.0</strong></td>
+                        <td><strong>合約合規性與文件證據查核 (Contract Compliance & Evidence)</strong></td>
+                        <td>核心任務：查核所有合約權利主張、款項追蹤及證據累積是否到位且符合規定。</td>
+                    </tr>
+                    <tr>
+                        <td>2.1</td>
+                        <td>專案每月正式發函有效性稽核 (RK、RL、YM、TYGL、ME06A）</td>
+                        <td>查核專案經理是否<strong>每月發函給業主</strong>，且函中附有<strong>圖說、照片和日期標註</strong>等實質證據。</td>
+                    </tr>
+                    <tr>
+                        <td>2.2</td>
+                        <td>CBS 變更依據及合規性驗證</td>
+                        <td>查核所有 CBS 變更是否皆具備<strong>業主正式認可檔</strong>。</td>
+                    </tr>
+                    <tr>
+                        <td>2.3</td>
+                        <td>分包商同意書回溯查核</td>
+                        <td>查核高雄三專案在 CBS 進版時，是否已取得<strong>所有專業分包商的同意書或發文告知記錄</strong>。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3.0</strong></td>
+                        <td><strong>文件控管平臺系統稽核 (Cost Control & Platform Audit)</strong></td>
+                        <td>驗證總經理要求建立的證據平臺和延期成本收集工作的完成度，以作為未來向業主<strong>追加費用</strong>的依據。</td>
+                    </tr>
+                    <tr>
+                        <td>3.1</td>
+                        <td>文件控管平臺建立狀態查核</td>
+                        <td>驗證專案是否已建立<strong>統一的NAS文件控管平臺及檔案夾</strong>，用於控管所有收發文記錄。</td>
+                    </tr>
+                    <tr>
+                        <td>3.2</td>
+                        <td>展延成本憑據收集狀態查核</td>
+                        <td>查核已展延專案是否已收集所有相關費用（如<strong>人力資源成本、延期保固</strong>）的憑據。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4.0</strong></td>
+                        <td><strong>稽核報告與決策 (Reporting & Finalization)</strong></td>
+                        <td>總結發現、提出建議並獲得總經理室批准。</td>
+                    </tr>
+                    <tr>
+                        <td>4.1</td>
+                        <td>擬定稽核發現與建議報告（初稿）</td>
+                        <td>根據查核結果，彙總不合規事項及風險評估。</td>
+                    </tr>
+                    <tr>
+                        <td>4.2</td>
+                        <td>報告審核與核准</td>
+                        <td>提交報告給合約法務經理（LM）及總經理室進行審核與最終決策。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="tab-content" id="tab2">
+            <h2>RACI 職責劃分表 (Stakeholders)</h2>
+            
+            <table class="raci-table">
+                <thead>
+                    <tr>
+                        <th>WBS 編號/任務名稱</th>
+                        <th>1.專案每月發函<br>有效性稽核</th>
+                        <th>2.分包商同意書查核</th>
+                        <th>3.展延成本<br>憑據查核</th>
+                        <th>4.報告審核<br>與核准</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>工程處專案經理 (PM)</strong></td>
+                        <td><strong>A (提供證據)</strong></td>
+                        <td>C</td>
+                        <td><strong>R (提供憑據)</strong></td>
+                        <td>I</td>
+                    </tr>
+                    <tr>
+                        <td><strong>合約法務經理 (LM)</strong></td>
+                        <td><strong>A (專案合規當責)</strong></td>
+                        <td>R (查核合規性)</td>
+                        <td>C</td>
+                        <td>C</td>
+                    </tr>
+                    <tr>
+                        <td><strong>QAD (稽核執行/監控)</strong></td>
+                        <td>R (執行抽樣)</td>
+                        <td>R (執行抽樣)</td>
+                        <td>R (執行抽樣)</td>
+                        <td><strong>A (報告匯總)</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>總經理室 (GMO)</strong></td>
+                        <td>I</td>
+                        <td>I</td>
+                        <td>I</td>
+                        <td><strong>A (最終決策)</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>說明:</h3>
+            <p><strong>RACI 職責劃分表</strong></p>
+            <p>本表針對稽核過程中的關鍵任務，劃分利害關係人的職責：</p>
+            <ul>
+                <li><strong>R (Responsible, 負責執行者)</strong>: 實際執行工作的人。</li>
+                <li><strong>A (Accountable, 負責/當責者)</strong>: 對任務結果負最終責任的人（通常只有一位）。</li>
+                <li><strong>C (Consulted, 諮詢者)</strong>: 在執行前必須提供意見或資訊的人。</li>
+                <li><strong>I (Informed, 告知者)</strong>: 需被告知進度或結果的人。</li>
+            </ul>
+        </div>
+        
+        <div class="tab-content" id="tab3">
+            <h2>稽核時程甘特圖 (Gantt Chart)</h2>
+            <p><strong>稽核期：2025 年 12 月 ~ 2026 年 1 月 10 日 (6 週)</strong></p>
+            
+            <div class="controls">
+                <button class="filter-btn active" data-filter="all">顯示全部</button>
+                <button class="filter-btn" data-filter="1">啟動與規劃階段</button>
+                <button class="filter-btn" data-filter="2">合約合規性與證據查核</button>
+                <button class="filter-btn" data-filter="3">文件控管平臺系統稽核</button>
+                <button class="filter-btn" data-filter="4">稽核報告與決策</button>
+            </div>
+            
+            <button id="downloadBtn" class="download-btn">下載甘特圖為PNG</button>
+            
+            <div id="gantt-chart">
+                <table class="gantt-container">
+                    <thead class="gantt-header">
+                        <tr>
+                            <th rowspan="2">主要階段名稱</th>
+                            <th colspan="6" class="week-header">週次</th>
+                        </tr>
+                        <tr>
+                            <th>第 1 週<br>(Dec 1-7)</th>
+                            <th>第 2 週<br>(Dec 8-14)</th>
+                            <th>第 3 週<br>(Dec 15-21)</th>
+                            <th>第 4 週<br>(Dec 22-28)</th>
+                            <th>第 5 週<br>(Dec 29-Jan 4)</th>
+                            <th>第 6 週<br>(Jan 5-10)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="gantt-body">
+                        <!-- 啟動與規劃階段 -->
+                        <tr class="phase-1-row">
+                            <td class="task-name main-task">1.0 啟動與規劃階段</td>
+                            <td><div class="gantt-bar phase-1" style="width: 100%;" data-task="1.0 啟動與規劃階段" data-week="第1週"></div></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-1-row">
+                            <td class="task-name sub-task">1.1 確立稽核範圍與啟動會議</td>
+                            <td><div class="gantt-bar phase-1" style="width: 100%;" data-task="1.1 確立稽核範圍與啟動會議" data-week="第1週"></div></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        
+                        <!-- 合約合規性與證據查核 -->
+                        <tr class="phase-2-row">
+                            <td class="task-name main-task">2.0 合約合規性與證據查核</td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.0 合約合規性與證據查核" data-week="第1週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.0 合約合規性與證據查核" data-week="第2週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.0 合約合規性與證據查核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.0 合約合規性與證據查核" data-week="第4週"></div></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-2-row">
+                            <td class="task-name sub-task">2.1 專案每月正式發函有效性稽核</td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.1 專案每月正式發函有效性稽核" data-week="第1週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.1 專案每月正式發函有效性稽核" data-week="第2週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.1 專案每月正式發函有效性稽核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.1 專案每月正式發函有效性稽核" data-week="第4週"></div></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-2-row">
+                            <td class="task-name sub-task">2.2 CBS 變更依據及合規性驗證</td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.2 CBS 變更依據及合規性驗證" data-week="第1週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.2 CBS 變更依據及合規性驗證" data-week="第2週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.2 CBS 變更依據及合規性驗證" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.2 CBS 變更依據及合規性驗證" data-week="第4週"></div></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-2-row">
+                            <td class="task-name sub-task">2.3 分包商同意書回溯查核 (RK/RL/YM)</td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.3 分包商同意書回溯查核" data-week="第2週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.3 分包商同意書回溯查核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-2" style="width: 100%;" data-task="2.3 分包商同意書回溯查核" data-week="第4週"></div></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        
+                        <!-- 文件控管平臺系統稽核 -->
+                        <tr class="phase-3-row">
+                            <td class="task-name main-task">3.0 文件控管平臺系統稽核</td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.0 文件控管平臺系統稽核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.0 文件控管平臺系統稽核" data-week="第4週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.0 文件控管平臺系統稽核" data-week="第5週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.0 文件控管平臺系統稽核" data-week="第6週"></div></td>
+                        </tr>
+                        <tr class="phase-3-row">
+                            <td class="task-name sub-task">3.1 文件控管平臺建立狀態查核</td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.1 文件控管平臺建立狀態查核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.1 文件控管平臺建立狀態查核" data-week="第4週"></div></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-3-row">
+                            <td class="task-name sub-task">3.2 展延成本憑據收集狀態查核</td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.2 展延成本憑據收集狀態查核" data-week="第3週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.2 展延成本憑據收集狀態查核" data-week="第4週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.2 展延成本憑據收集狀態查核" data-week="第5週"></div></td>
+                            <td><div class="gantt-bar phase-3" style="width: 100%;" data-task="3.2 展延成本憑據收集狀態查核" data-week="第6週"></div></td>
+                        </tr>
+                        
+                        <!-- 稽核報告與決策 -->
+                        <tr class="phase-4-row">
+                            <td class="task-name main-task">4.0 稽核報告與決策</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-4" style="width: 100%;" data-task="4.0 稽核報告與決策" data-week="第5週"></div></td>
+                            <td><div class="gantt-bar phase-4" style="width: 100%;" data-task="4.0 稽核報告與決策" data-week="第6週"></div></td>
+                        </tr>
+                        <tr class="phase-4-row">
+                            <td class="task-name sub-task">4.1 擬定稽核發現與建議報告（初稿）</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-4" style="width: 100%;" data-task="4.1 擬定稽核發現與建議報告（初稿）" data-week="第5週"></div></td>
+                            <td></td>
+                        </tr>
+                        <tr class="phase-4-row">
+                            <td class="task-name sub-task">4.2 報告審核與核准</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="gantt-bar phase-4" style="width: 100%;" data-task="4.2 報告審核與核准" data-week="第6週"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color phase-1"></div>
+                        <span>啟動與規劃階段</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-2"></div>
+                        <span>合約合規性與證據查核</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-3"></div>
+                        <span>文件控管平臺系統稽核</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-4"></div>
+                        <span>稽核報告與決策</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <span>品保部跨部門協作</span>
+            <img src="https://i.urusai.cc/GXiu2.png" alt="STE NAME" class="ste-name">
+        </footer>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script>
+        // 分頁切換功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有active類
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // 添加active類到當前分頁
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // 工具提示功能
+        const tooltip = document.getElementById('tooltip');
+        const bars = document.querySelectorAll('.gantt-bar');
+        
+        bars.forEach(bar => {
+            bar.addEventListener('mouseover', function(e) {
+                const task = this.getAttribute('data-task');
+                const week = this.getAttribute('data-week');
+                tooltip.textContent = `${task} - ${week}`;
+                tooltip.style.display = 'block';
+                
+                // 更新工具提示位置
+                const rect = this.getBoundingClientRect();
+                tooltip.style.left = (rect.left + window.scrollX) + 'px';
+                tooltip.style.top = (rect.top + window.scrollY - 30) + 'px';
+            });
+            
+            bar.addEventListener('mouseout', function() {
+                tooltip.style.display = 'none';
+            });
+        });
+        
+        // 篩選功能
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按鈕的active類
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // 添加active類到當前按鈕
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                
+                // 顯示或隱藏行
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        if (row.classList.contains(`phase-${filter}-row`)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // PNG下載功能
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        downloadBtn.addEventListener('click', function() {
+            // 顯示載入訊息
+            downloadBtn.textContent = '正在生成PNG...';
+            downloadBtn.disabled = true;
+            
+            // 使用html2canvas將甘特圖轉換為圖片
+            html2canvas(document.getElementById('gantt-chart'), {
+                scale: 2, // 提高圖片質量
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                // 將canvas轉換為圖片URL
+                const imgData = canvas.toDataURL('image/png');
+                
+                // 創建下載連結
+                const link = document.createElement('a');
+                link.href = imgData;
+                link.download = '稽核時程甘特圖.png';
+                
+                // 觸發下載
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 恢復按鈕狀態
+                downloadBtn.textContent = '下載甘特圖為PNG';
+                downloadBtn.disabled = false;
+            }).catch(error => {
+                console.error('生成PNG時發生錯誤:', error);
+                alert('下載失敗，請重試');
+                
+                // 恢復按鈕狀態
+                downloadBtn.textContent = '下載甘特圖為PNG';
+                downloadBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
